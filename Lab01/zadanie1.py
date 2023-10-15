@@ -1,5 +1,6 @@
 import networkx as nx
 import matplotlib.pyplot as plt
+import numpy as np
 
 
 class Graph:
@@ -115,6 +116,22 @@ class Graph:
     def change_graph_type(self):
         self.directed = not self.directed
 
+    def adjacency_matrix(self):
+        num_nodes = len(self.graph.nodes())
+        adj_matrix = np.zeros((num_nodes, num_nodes), dtype=int)
+
+        for edge in self.graph.edges(data=True):
+            source = edge[0]
+            target = edge[1]
+
+            if self.directed:
+                adj_matrix[source][target] = 1
+            else:
+                adj_matrix[source][target] = 1
+                adj_matrix[target][source] = 1
+
+        return adj_matrix
+
 
 graph = Graph(True)
 file_name = "krawedzie.txt"
@@ -138,7 +155,8 @@ while True:
     print("7. Liczba wierzchołków stopnia parzystego i nieparzystego")
     print("8. Posortowane stopnie wierzchołków")
     print("9. Zmiana typu grafu (skierowany/nieskierowany)")
-    print("10. Przedstaw graficznie graf")
+    print("10. Macierz sasiedztwa")
+    print("Wyswietl - Przedstaw graficznie graf")
     print("Zakoncz - Wyjście z programu")
     choice = input("Wybierz opcję: ")
 
@@ -177,6 +195,11 @@ while True:
         graph.change_graph_type()
         print("Typ grafu został zmieniony.")
     elif choice == '10':
+        adjacency = graph.adjacency_matrix()
+        print("Macierz sąsiedztwa:")
+        for row in adjacency:
+            print(row)
+    elif choice.lower() == 'wyswietl':
         graph.draw_graph()
     elif choice.lower() == 'zakoncz':
         break
