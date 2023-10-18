@@ -121,14 +121,14 @@ class Graph:
         adj_matrix = np.zeros((num_nodes, num_nodes), dtype=int)
 
         for edge in self.graph.edges(data=True):
-            source = edge[0]
-            target = edge[1]
+            i = edge[0]
+            j = edge[1]
 
             if self.directed:
-                adj_matrix[source][target] = 1
+                adj_matrix[i][j] = 1
             else:
-                adj_matrix[source][target] = 1
-                adj_matrix[target][source] = 1
+                adj_matrix[i][j] = 1
+                adj_matrix[j][i] = 1
 
         return adj_matrix
 
