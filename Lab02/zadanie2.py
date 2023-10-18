@@ -1,17 +1,17 @@
-import networkx as nx
 import numpy as np
 import matplotlib.pyplot as plt
+import networkx as nx
 
 
-def naive_cycle_c3_check(G):
+def naive_cycle_c3_check(adj_matrix):
     cycles = set()
-    for node in G.nodes():
-        neighbors = list(G.neighbors(node))
-        if len(neighbors) >= 2:
-            for neighbor1 in neighbors:
-                for neighbor2 in neighbors:
-                    if neighbor1 != neighbor2 and G.has_edge(neighbor1, neighbor2):
-                        cycle = tuple(sorted([node, neighbor1, neighbor2]))
+    num_nodes = len(adj_matrix)
+    for i in range(num_nodes):
+        for j in range(num_nodes):
+            if adj_matrix[i, j] == 1:
+                for k in range(num_nodes):
+                    if adj_matrix[j, k] == 1 and adj_matrix[i, k] == 1 and i != j and j != k and i != k:
+                        cycle = tuple(sorted([i, j, k]))
                         cycles.add(cycle)
     return [list(cycle) for cycle in cycles]
 
@@ -30,17 +30,16 @@ def adjacency_matrix(G):
     return adj_matrix
 
 
-def matrix_mult_cycle_c3_check(G):
+def matrix_mult_cycle_c3_check(adj_matrix):
     cycles = set()
-    matrix = adjacency_matrix(G)
-    c3 = np.dot(matrix, np.dot(matrix, matrix))
-    for i in range(G.number_of_nodes()):
-        if c3[i, i] > 0:
-            neighbors = list(G.neighbors(i))
-            for neighbor1 in neighbors:
-                for neighbor2 in neighbors:
-                    if neighbor1 != neighbor2 and G.has_edge(neighbor1, neighbor2):
-                        cycle = tuple(sorted([i, neighbor1, neighbor2]))
+    num_nodes = len(adj_matrix)
+    c3 = np.dot(adj_matrix, adj_matrix)
+    for i in range(num_nodes):
+        for j in range(num_nodes):
+            if adj_matrix[i, j] > 0 and c3[i, j] > 0:
+                for k in range(num_nodes):
+                    if adj_matrix[j, k] == 1 and adj_matrix[i, k] == 1 and i != j and j != k and i != k:
+                        cycle = tuple(sorted([i, j, k]))
                         cycles.add(cycle)
     return [list(cycle) for cycle in cycles]
 
@@ -56,18 +55,20 @@ try:
             G.add_edge(i, j)
 except FileNotFoundError:
     print(f"Plik '{file_path}' nie istnieje.")
+
+adj_matrix = adjacency_matrix(G)
 nx.draw(G, nx.spring_layout(G), with_labels=True)
 plt.show()
 
 print("Wersja naiwna:")
-cycle_c3 = naive_cycle_c3_check(G)
+cycle_c3 = naive_cycle_c3_check(adj_matrix)
 if cycle_c3:
     print(f"Znalezione unikalne cykle C3: {cycle_c3}")
 else:
     print("Brak cykli C3.")
 
 print("Wersja w oparciu o mnożenie macierzy:")
-cycle_c3 = matrix_mult_cycle_c3_check(G)
+cycle_c3 = matrix_mult_cycle_c3_check(adj_matrix)
 if cycle_c3:
     print(f"Znalezione unikalne cykle C3: {cycle_c3}")
 else:
