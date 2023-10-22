@@ -14,24 +14,27 @@ except FileNotFoundError:
     print(f"Plik '{file_path}' nie istnieje.")
 
 
-def dfs_tree(graph, start_node):
+def dfs(graph, start_node):
     visited = set()
-    stack = [(start_node, None)]
     dfs_tree = nx.Graph()
-    while stack:
-        node, parent = stack.pop()
-        if node not in visited:
-            visited.add(node)
-            if parent is not None:
-                dfs_tree.add_edge(parent, node)
-            for neighbor in graph.neighbors(node):
-                if neighbor not in visited:
-                    stack.append((neighbor, node))
+
+    def dfs_recursive(node, parent):
+        visited.add(node)
+
+        if parent is not None:
+            dfs_tree.add_edge(parent, node)
+
+        for neighbor in graph.neighbors(node):
+            if neighbor not in visited:
+                dfs_recursive(neighbor, node)
+
+    dfs_recursive(start_node, None)
+
     return dfs_tree
 
 
-start_node = list(G.nodes())[0]
-dfs_tree_result = dfs_tree(G, start_node)
+start_node = int(input("Podaj poczatkowy wierzcholek: "))
+dfs_tree_result = dfs(G, start_node)
 
 print(f"Drzewo spinające DFS: {list(dfs_tree_result.edges())}")
 
