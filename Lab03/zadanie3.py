@@ -16,29 +16,32 @@ except FileNotFoundError:
 
 def dfs(graph, start_node):
     visited = set()
-    dfs_tree = nx.Graph()
+    tab = []
 
     def dfs_recursive(node, parent):
         visited.add(node)
 
         if parent is not None:
-            dfs_tree.add_edge(parent, node)
-
+            tab.append([parent, node])
         for neighbor in graph.neighbors(node):
             if neighbor not in visited:
                 dfs_recursive(neighbor, node)
 
     dfs_recursive(start_node, None)
 
-    return dfs_tree
+    return tab
 
 
 start_node = int(input("Podaj poczatkowy wierzcholek: "))
-dfs_tree_result = dfs(G, start_node)
+dfs_array = dfs(G, start_node)
 
-print(f"Drzewo spinające DFS: {list(dfs_tree_result.edges())}")
+print(f"Drzewo spinające DFS: {dfs_array}")
+
+dfs_tree = nx.Graph()
+for pair in dfs_array:
+    dfs_tree.add_edge(pair[0], pair[1])
 
 pos = nx.spring_layout(G)
 nx.draw(G, pos, with_labels=True)
-nx.draw(dfs_tree_result, pos, edge_color='r', with_labels=True)
+nx.draw(dfs_tree, pos, edge_color='r', with_labels=True)
 plt.show()
