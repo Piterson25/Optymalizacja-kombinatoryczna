@@ -29,10 +29,15 @@ def dfs(graph, start_node):
 
     dfs_recursive(start_node, None)
 
+    if len(tab) == graph.number_of_edges():
+        print("Graf jest spójny! :)")
+    else:
+        print("Graf nie jest spójny! :(")
+
     return tab
 
 
-start_node = int(input("Podaj poczatkowy wierzcholek: "))
+start_node = int(input("Podaj początkowy wierzchołek: "))
 dfs_array = dfs(G, start_node)
 
 print(f"Drzewo spinające DFS: {dfs_array}")
