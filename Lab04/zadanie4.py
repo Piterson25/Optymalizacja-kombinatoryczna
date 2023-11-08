@@ -1,3 +1,6 @@
+import math
+
+
 def find_minimum_spanning_tree(n, edges):
     mst = set()
 
@@ -6,11 +9,11 @@ def find_minimum_spanning_tree(n, edges):
 
     total_weight = 0
 
-    if not is_connected(n, edges, startVertex):
-        return "graf niespójny - brak drzewa spinającego"
-
     while len(mst) < n:
         minEdge, minWeight = findMinEdge(edges, mst)
+
+        if math.isinf(minWeight):
+            return "graf niespójny - brak drzewa spinającego"
 
         if minEdge is not None:
             total_weight += minWeight
@@ -19,30 +22,13 @@ def find_minimum_spanning_tree(n, edges):
     return total_weight
 
 
-def is_connected(n, edges, startVertex):
-    visited = [False] * n
-    stack = [startVertex]
-
-    while stack:
-        current_vertex = stack.pop()
-        visited[current_vertex] = True
-
-        for u, v, _ in edges:
-            if u == current_vertex and not visited[v]:
-                stack.append(v)
-            if v == current_vertex and not visited[u]:
-                stack.append(u)
-
-    return all(visited)
-
-
 def findMinEdge(edges, mst):
     minEdge = None
     minWeight = float('inf')
 
     for edge in edges:
         u, v, w = edge[0], edge[1], edge[2]
-        if ((u in mst and v not in mst) or (v in mst and u not in mst)) and w < minWeight:
+        if (u in mst) != (v in mst) and w < minWeight:
             minEdge = v if u in mst else u
             minWeight = w
 
