@@ -1,5 +1,6 @@
 import networkx as nx
 import matplotlib.pyplot as plt
+import math
 
 
 class Graph:
@@ -11,24 +12,26 @@ class Graph:
         self.graph.append([u, v, w])
 
     def print_solution(self, dist):
-        print(f"Wierzchołek\t\tDystans od źródła")
+        print("Wierzchołek\t\tDystans od źródła")
         for i in range(self.V):
             print(f"{i}\t\t\t\t{dist[i]}")
 
     def bellman_ford(self):
         max_vertex = max(max(edge[:2]) for edge in self.graph)
-        dist = [float("Inf")] * (max_vertex + 1)
+        dist = [math.inf] * (max_vertex + 1)
         pred = [-1] * (max_vertex + 1)
         dist[0] = 0
 
         for _ in range(max_vertex):
             for u, v, w in self.graph:
-                if dist[u] != float("Inf") and dist[u] + w < dist[v]:
-                    dist[v] = dist[u] + w
-                    pred[v] = u
+                if dist[u] != math.inf:
+                    new_dist = dist[u] + w
+                    if new_dist < dist[v]:
+                        dist[v] = new_dist
+                        pred[v] = u
 
         for u, v, w in self.graph:
-            if dist[u] != float("Inf") and dist[u] + w < dist[v]:
+            if dist[u] != math.inf and dist[u] + w < dist[v]:
                 print("Graf zawiera ujemny cykl")
                 return
 
