@@ -1,4 +1,5 @@
 import copy
+from random import randint
 
 
 class Graph:
@@ -15,12 +16,23 @@ class Graph:
         self.graph[u].append(v)
         self.graph[v].append(u)
 
-    def find_eulerian_cycle(self):
-        graph_prim = self.graph.copy()
+    def chinese_postman(self):
+        if is_connected(self.graph):
+            if count_odd_degrees(self.graph) == 0:
+                print(f"Graf jest eulerowski!")
+                self.find_eulerian_cycle()
+            elif count_odd_degrees(self.graph) == 2:
+                print(f"Graf jest poleulerowski")
+            else:
+                print(f"Graf nie jest eulerowski")
+        else:
+            print(f"Graf nie jest spójny!")
 
-        start_vertex = g.startVertex
-        current_v = start_vertex
-        euler_cycle = [start_vertex]
+    def find_eulerian_cycle(self):
+        graph_prim = copy.deepcopy(self.graph)
+
+        current_v = randint(0, len(graph_prim) - 1)
+        euler_cycle = [current_v]
 
         while len(graph_prim) > 0:
             if current_v in graph_prim:
@@ -38,6 +50,7 @@ class Graph:
                     for edge in edges:
                         hmm = copy.deepcopy(graph_prim)
                         hmm[current_v].remove(edge)
+                        hmm[edge].remove(current_v)
 
                         if is_connected(hmm):
                             euler_cycle.append(edge)
@@ -45,25 +58,20 @@ class Graph:
                             graph_prim[edge].remove(current_v)
                             current_v = edge
                             break
+                    if not edges:
+                        del graph_prim[current_v]
             else:
                 break
 
-        if is_connected(graph_prim):
-            if check_degrees(self.graph):
-                print(f"Graf jest eulerowski!: {euler_cycle}")
-            else:
-                print(f"Graf jest poleulerowski: {euler_cycle}")
-        else:
-            print(f"Graf nie jest eulerowski")
-
-        return euler_cycle
+        print(f"Cykl Eulera: {euler_cycle}")
 
 
-def check_degrees(graph):
+def count_odd_degrees(graph):
+    odd_degrees = 0
     for vertices in graph.values():
         if len(vertices) % 2 != 0:
-            return False
-    return True
+            odd_degrees += 1
+    return odd_degrees
 
 
 def is_connected(graph):
@@ -82,9 +90,9 @@ def is_connected(graph):
     return len(visited) == len(graph)
 
 
-g = Graph()
+G = Graph()
 
-file_path = "krawedzie.txt"
+file_path = "krawedzie3.txt"
 
 try:
     with open(file_path, "r") as file:
@@ -92,12 +100,9 @@ try:
         for line in lines:
             data = line.split(",")
             u, v, w = int(data[0]), int(data[1]), int(data[2])
-            g.add_edge(u, v, w)
+            G.add_edge(u, v, w)
 
-    start_vertex = 1
-    g.startVertex = start_vertex
-
-    euler_cycle = g.find_eulerian_cycle()
+    G.chinese_postman()
 
 except FileNotFoundError:
     print(f"Plik {file_path} nie został znaleziony")
