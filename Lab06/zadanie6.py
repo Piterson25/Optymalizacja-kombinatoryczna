@@ -5,6 +5,7 @@ from random import randint
 class Graph:
     def __init__(self):
         self.graph = {}
+        self.weights = {}
         self.visited_edges = {}
 
     def add_edge(self, u, v, weight):
@@ -15,6 +16,35 @@ class Graph:
 
         self.graph[u].append(v)
         self.graph[v].append(u)
+        self.weights[(u, v)] = weight
+        self.weights[(v, u)] = weight
+
+    def find_shortest_path(self, start_vertex, end_vertex):
+        visited = set()
+        path = []
+        min_path = []
+
+        def dfs_shortest_path(current_vertex, target_vertex):
+            visited.add(current_vertex)
+            path.append(current_vertex)
+
+            if current_vertex == target_vertex:
+                if not min_path or sum(self.weights[(path[i], path[i + 1])] for i in range(len(path) - 1)) < sum(
+                        self.weights[(min_path[i], min_path[i + 1])] for i in range(len(min_path) - 1)):
+                    min_path[:] = path[:]
+                path.pop()
+                visited.remove(current_vertex)
+                return
+
+            for neighbor in self.graph[current_vertex]:
+                if neighbor not in visited:
+                    dfs_shortest_path(neighbor, target_vertex)
+
+            path.pop()
+            visited.remove(current_vertex)
+
+        dfs_shortest_path(start_vertex, end_vertex)
+        return min_path[::-1]
 
     def chinese_postman(self):
         if is_connected(self.graph):
@@ -22,7 +52,8 @@ class Graph:
                 print(f"Graf jest eulerowski!")
                 self.find_eulerian_cycle()
             elif count_odd_degrees(self.graph) == 2:
-                print(f"Graf jest poleulerowski")
+                print(f"Graf jest półeulerowski")
+                self.find_eulerian_path()
             else:
                 print(f"Graf nie jest eulerowski")
         else:
@@ -30,6 +61,7 @@ class Graph:
 
     def find_eulerian_cycle(self):
         graph_prim = copy.deepcopy(self.graph)
+        weights = copy.deepcopy(self.weights)
 
         current_v = randint(0, len(graph_prim) - 1)
         euler_cycle = [current_v]
@@ -55,6 +87,8 @@ class Graph:
                         if is_connected(hmm):
                             euler_cycle.append(edge)
                             edges.remove(edge)
+                            del weights[(current_v, edge)]
+                            del weights[(edge, current_v)]
                             graph_prim[edge].remove(current_v)
                             current_v = edge
                             break
@@ -64,6 +98,52 @@ class Graph:
                 break
 
         print(f"Cykl Eulera: {euler_cycle}")
+
+    def find_eulerian_path(self):
+        graph_prim = copy.deepcopy(self.graph)
+        weights = copy.deepcopy(self.weights)
+        odd_degree_vertices = [vertex for vertex, neighbors in graph_prim.items() if len(neighbors) % 2 != 0]
+
+        start_vertex, end_vertex = odd_degree_vertices
+        euler_path = []
+        current_v = start_vertex
+
+        while len(graph_prim) > 0:
+            if current_v in graph_prim:
+                if len(graph_prim[current_v]) == 0:
+                    break
+                elif len(graph_prim[current_v]) == 1:
+                    next_vec = graph_prim[current_v][0]
+                    euler_path.append(next_vec)
+
+                    del graph_prim[current_v]
+                    graph_prim[next_vec].remove(current_v)
+                    current_v = next_vec
+                else:
+                    edges = graph_prim[current_v]
+                    for edge in edges:
+                        hmm = copy.deepcopy(graph_prim)
+                        hmm[current_v].remove(edge)
+                        hmm[edge].remove(current_v)
+
+                        if is_connected(hmm):
+                            euler_path.append(edge)
+                            edges.remove(edge)
+                            del weights[(current_v, edge)]
+                            del weights[(edge, current_v)]
+                            graph_prim[edge].remove(current_v)
+                            current_v = edge
+                            break
+                    if not edges:
+                        del graph_prim[current_v]
+            else:
+                break
+
+        euler_path.insert(0, start_vertex)
+        shortest_path = self.find_shortest_path(start_vertex, end_vertex)
+        print(f"Droga Eulera: {euler_path}")
+        print(f"Najkrótsza ścieżka: {shortest_path}")
+        print(f"Trasa listonosza: {euler_path + shortest_path[1:]}")
 
 
 def count_odd_degrees(graph):
@@ -92,7 +172,7 @@ def is_connected(graph):
 
 G = Graph()
 
-file_path = "krawedzie3.txt"
+file_path = "krawedzie.txt"
 
 try:
     with open(file_path, "r") as file:
