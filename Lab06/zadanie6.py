@@ -1,5 +1,6 @@
 import copy
 from random import randint
+import networkx as nx
 
 
 class Graph:
@@ -56,12 +57,13 @@ class Graph:
                 self.find_eulerian_path()
             else:
                 print(f"Graf nie jest eulerowski")
+                self.not_eulerian()
+                self.find_eulerian_cycle()
         else:
             print(f"Graf nie jest spójny!")
 
     def find_eulerian_cycle(self):
         graph_prim = copy.deepcopy(self.graph)
-        weights = copy.deepcopy(self.weights)
 
         current_v = randint(0, len(graph_prim) - 1)
         euler_cycle = [current_v]
@@ -87,8 +89,6 @@ class Graph:
                         if is_connected(hmm):
                             euler_cycle.append(edge)
                             edges.remove(edge)
-                            del weights[(current_v, edge)]
-                            del weights[(edge, current_v)]
                             graph_prim[edge].remove(current_v)
                             current_v = edge
                             break
@@ -145,6 +145,46 @@ class Graph:
         print(f"Najkrótsza ścieżka: {shortest_path}")
         print(f"Trasa listonosza: {euler_path + shortest_path[1:]}")
 
+    def not_eulerian(self):
+        graph_prim = copy.deepcopy(self.graph)
+        weights = copy.deepcopy(self.weights)
+        W = [vertex for vertex, neighbors in graph_prim.items() if len(neighbors) % 2 != 0]
+
+        shortest_paths = {}
+
+        G_prim = Graph()
+
+        for i in range(len(W)):
+            for j in range(i + 1, len(W)):
+                start_vertex, end_vertex = W[i], W[j]
+                shortest_path = self.find_shortest_path(start_vertex, end_vertex)
+                shortest_path_length = sum(
+                    self.weights[(shortest_path[i], shortest_path[i + 1])] for i in range(len(shortest_path) - 1))
+                G_prim.add_edge(start_vertex, end_vertex, shortest_path_length)
+                shortest_paths[(start_vertex, end_vertex)] = shortest_path
+                print(
+                    f"Najkrótsza ścieżka między {start_vertex} a {end_vertex}: {shortest_path} {shortest_path_length}")
+
+        nxGraph = nx.Graph()
+        for u, v in G_prim.weights:
+            nxGraph.add_edge(u, v, weight=G_prim.weights[(u, v)])
+
+        G = list(nx.algorithms.min_weight_matching(nxGraph))
+        min_weight_matching_weights = {}
+        for v in G:
+            v = tuple(sorted(v))
+            min_weight_matching_weights[v] = shortest_paths[v]
+        print(f"Minimalne skojrzenie dokladne: {min_weight_matching_weights}")
+
+        for e in min_weight_matching_weights:
+            vertices = min_weight_matching_weights[e][::-1]
+            for i in range(len(vertices)):
+                if i + 1 < len(vertices):
+                    if len(vertices) == 2:
+                        self.add_edge(vertices[i], vertices[i + 1], weights[tuple(vertices)])
+                    else:
+                        self.add_edge(vertices[i], vertices[i + 1], weights[tuple([vertices[i], vertices[i + 1]])])
+
 
 def count_odd_degrees(graph):
     odd_degrees = 0
@@ -172,7 +212,7 @@ def is_connected(graph):
 
 G = Graph()
 
-file_path = "krawedzie.txt"
+file_path = input("Podaj nazwę pliku z krawędziami: ")
 
 try:
     with open(file_path, "r") as file:
@@ -181,7 +221,6 @@ try:
             data = line.split(",")
             u, v, w = int(data[0]), int(data[1]), int(data[2])
             G.add_edge(u, v, w)
-
     G.chinese_postman()
 
 except FileNotFoundError:
