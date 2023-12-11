@@ -1,3 +1,9 @@
+import copy
+import heapq
+
+import networkx as nx
+
+
 class Edge:
     def __init__(self, u, v, weight):
         if u < v:
@@ -70,20 +76,20 @@ class Graph:
 
         start_vertex = list(adj_list.keys())[0]
         visited = set([start_vertex])
+        edges_heap = []
 
-        edges_heap = [(weight, start_vertex, neighbor) for neighbor, weight in adj_list[start_vertex]]
-        edges_heap.sort()
+        for neighbor, weight in adj_list[start_vertex]:
+            heapq.heappush(edges_heap, (weight, start_vertex, neighbor))
 
         while edges_heap:
-            weight, u, v = edges_heap.pop(0)
+            weight, u, v = heapq.heappop(edges_heap)
             if v not in visited:
                 visited.add(v)
                 min_tree.append(Edge(u, v, weight))
 
                 for neighbor, weight in adj_list[v]:
                     if neighbor not in visited:
-                        edges_heap.append((weight, v, neighbor))
-                edges_heap.sort()
+                        heapq.heappush(edges_heap, (weight, v, neighbor))
 
         return min_tree
 
@@ -99,9 +105,60 @@ class Graph:
         print("Graf jest pełny")
 
         T = self.minimum_spanning_tree()
-        print("Minimalne drzewo spinające:")
+        print(f"\nMinimalne drzewo spinające T: {[(edge.u, edge.v) for edge in T]}")
+
+        G_networkx = nx.Graph()
+
         for edge in T:
-            print(edge)
+            G_networkx.add_edge(edge.u, edge.v, weight=edge.weight)
+
+        O = [node for node, degree in G_networkx.degree() if degree % 2 != 0]
+
+        print("\nZbiór O wierzchołki o nieparzystym stopniu z T:", O)
+
+        subgraph = nx.Graph()
+        for edge in self.edges:
+            subgraph.add_edge(edge.u, edge.v, weight=edge.weight)
+
+        subgraph = subgraph.subgraph(O)
+        print(f"Podgraf G z wierzchołkami O: {subgraph.edges()}")
+
+        M = list(nx.algorithms.min_weight_matching(subgraph))
+
+        print("Zbiór M minimalnego skojarzenia doskonałego:", M)
+
+        H = nx.MultiGraph()
+
+        for edge in T:
+            H.add_edge(edge.u, edge.v, weight=edge.weight)
+
+        for u, v in M:
+            H.add_edge(u, v)
+
+        print(f"\nPodgraf po połączeniu zbioru M i T: {H.edges()}")
+
+        try:
+            eulerian_cycle = []
+            for edge in list(nx.eulerian_circuit(H)):
+                eulerian_cycle.append(edge[0])
+            eulerian_cycle.append(eulerian_cycle[0])
+            print(f"\nCykl Eulera w grafie H: {eulerian_cycle}")
+
+            visited = set()
+            hamiltonian_cycle = []
+
+            for node in eulerian_cycle:
+                if node not in visited:
+                    hamiltonian_cycle.append(node)
+                    visited.add(node)
+
+            if len(hamiltonian_cycle) == len(set(H.nodes)):
+                hamiltonian_cycle.append(hamiltonian_cycle[0])
+                print(f"\nCykl Hamiltona z cyklu Eulera: {hamiltonian_cycle}")
+            else:
+                print("\nNie udało się stworzyć cyklu Hamiltona")
+        except nx.NetworkXError:
+            print("\nNie można znaleźć cyklu Eulera")
 
 
 G = Graph()
