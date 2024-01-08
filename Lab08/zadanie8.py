@@ -77,51 +77,51 @@ def calculate_schedule_length(tasks):
     return max(task.earliest_start + task.duration for task in tasks.values())
 
 
-def harmonogram(tasks, num_machines):
+def harmonogram(tasks):
     _, ax = plt.subplots()
 
-    ax.set_ylim(0, num_machines + 1)
+    sorted_tasks = sorted(tasks.values(), key=lambda x: x.earliest_start)
 
-    machine_tasks = {}
+    machines = []
+    machine_end_times = []
 
-    for task_id, task in tasks.items():
-        machine_id = task.id % num_machines
-        if machine_id not in machine_tasks:
-            machine_tasks[machine_id] = []
-        machine_tasks[machine_id].append(
-            (task.earliest_start, task.duration, task_id))
-
-    num_colors = len(tasks)
     cmap = plt.get_cmap('tab20')
-    colors = [cmap(i) for i in np.linspace(0, 1, num_colors)]
 
-    for machine_id, tasks_list in machine_tasks.items():
-        tasks_list.sort(key=lambda x: x[0])
-        y = num_machines - machine_id
-        for i, (start, duration, task_id) in enumerate(tasks_list):
-            color_index = task_id % num_colors
-            ax.broken_barh([(start, duration)], (y - 0.4, 0.8),
+    for task in sorted_tasks:
+        machine_found = False
+        for i, machine_end_time in enumerate(machine_end_times):
+            if task.earliest_start >= machine_end_time:
+                machines[i].append(task)
+                machine_end_times[i] = task.earliest_start + task.duration
+                machine_found = True
+                break
+
+        if not machine_found:
+            machines.append([task])
+            machine_end_times.append(task.earliest_start + task.duration)
+
+    colors = [cmap(i) for i in np.linspace(0, 1, len(sorted_tasks))]
+
+    for i, machine_tasks in enumerate(machines):
+        for task in machine_tasks:
+            color_index = sorted_tasks.index(task)
+            ax.broken_barh([(task.earliest_start, task.duration)],
+                           (i + 0.6, 0.8),
                            facecolors=colors[color_index])
-
-            text_x = start + duration / 2
-            text_y = y
-            ax.text(text_x, text_y, f'Z{task_id}',
+            ax.text(task.earliest_start + task.duration / 2, i + 1,
+                    f'Z{task.id}',
                     ha='center', va='center', color='white', weight='bold')
 
     ax.set_xlabel('Czas trwania zadania')
     ax.set_ylabel('Numer maszyny')
-
-    ax.set_xticks(np.arange(0, max(
-        task.earliest_start + task.duration for task in tasks.values()) + 1,
-                            step=1))
-    ax.set_yticks(np.arange(1, num_machines + 1, step=1))
+    ax.set_xticks(np.arange(0, max(machine_end_times) + 1, step=1))
+    ax.set_yticks(np.arange(1, len(machines) + 1, step=1))
 
     plt.show()
 
 
 def main():
     file_name = "zadania.txt"
-    num_machines = 5
 
     tasks = read_from_file(file_name)
     earliest_start(tasks)
@@ -139,7 +139,7 @@ def main():
     print(f"\nŚcieżka krytyczna: {critical_path}")
     print(f"\nDługość uszeregowania: {schedule_length}")
 
-    harmonogram(tasks, num_machines)
+    harmonogram(tasks)
 
 
 if __name__ == "__main__":
