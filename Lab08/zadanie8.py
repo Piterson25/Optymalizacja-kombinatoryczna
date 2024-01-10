@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
 import numpy as np
+import math
 
 
 class Task:
@@ -9,7 +10,7 @@ class Task:
         self.successors = []
         self.predecessors = []
         self.earliest_start = 0
-        self.latest_start = float('inf')
+        self.latest_start = math.inf
 
 
 def read_from_file(file_name):
@@ -52,17 +53,26 @@ def earliest_start(tasks):
 
 
 def latest_start(tasks):
-    sorted_tasks = sorted(tasks.values(), key=lambda x: x.earliest_start,
-                          reverse=True)
+    end_tasks = [task for task in tasks.values() if not task.successors]
 
-    for task in sorted_tasks:
-        if not task.successors:
-            task.latest_start = task.earliest_start
+    min_time = calculate_schedule_length(tasks)
 
-        for predecessor_id in task.predecessors:
-            predecessor = tasks[predecessor_id]
-            task.latest_start = min(task.latest_start,
-                                    predecessor.latest_start - task.duration)
+    for end_task in end_tasks:
+        end_task.latest_start = min_time - end_task.duration
+
+    visited = set()
+    stack = end_tasks[:]
+
+    while stack:
+        current_task = stack.pop()
+        visited.add(current_task.id)
+
+        for pred_id in current_task.predecessors:
+            predecessor = tasks[pred_id]
+            predecessor.latest_start = min(predecessor.latest_start,
+                                           current_task.latest_start - predecessor.duration)
+            if all(succ_id in visited for succ_id in predecessor.successors):
+                stack.append(predecessor)
 
 
 def find_critical_path(tasks):
@@ -136,7 +146,7 @@ def main():
             f"Z{task_id:02}     | {task.earliest_start:20} | "
             f"{task.latest_start:18}")
 
-    print(f"\nŚcieżka krytyczna: {critical_path}")
+    print(f"\nŚcieżka krytyczna: {", ".join(f"Z{x}" for x in critical_path)}")
     print(f"\nDługość uszeregowania: {schedule_length}")
 
     harmonogram(tasks)
